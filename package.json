@@ -9,5 +9,22 @@
   "devDependencies": {
     "nodemon": "^2.0.15",
     "prettier": "2.6.2"
-  }
+  },
+  "name": "e-commerce",
+  "description": "\"# e-commerce\"",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon V1/src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nisanurbaydas/e-commerce.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nisanurbaydas/e-commerce/issues"
+  },
+  "homepage": "https://github.com/nisanurbaydas/e-commerce#readme"
 }
