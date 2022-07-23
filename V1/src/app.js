@@ -2,8 +2,10 @@ const express = require('express');
 const helmet = require('helmet');
 
 const config = require('./config/index');
+const loaders = require('./loaders');
 
 config();
+loaders();
 
 const app = express();
 app.use(express.json());
