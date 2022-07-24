@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const config = require('./config/index');
 const loaders = require('./loaders');
 
-const { ProductRoutes } = require('./routes');
+const { ProductRoutes, UserRoutes } = require('./routes');
 
 config();
 loaders();
@@ -18,4 +18,5 @@ app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 
   app.use('/products', ProductRoutes);
+  app.use('/users', UserRoutes);
 });
