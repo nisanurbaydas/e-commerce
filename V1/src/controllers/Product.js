@@ -1,5 +1,8 @@
+const path = require('path');
 const httpStatus = require('http-status');
-const { list, insert } = require('../services/Product');
+
+const { list, insert, modify, findOne } = require('../services/Product');
+const { checkSecureFile } = require('../scripts/utils/helper');
 
 const index = (req, res) => {
   list()
@@ -8,7 +11,7 @@ const index = (req, res) => {
       res.status(httpStatus.OK).send(itemList);
     })
     .catch((e) => {
-      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
+      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e.message);
     });
 };
 
@@ -23,7 +26,63 @@ const create = (req, res) => {
     });
 };
 
+const update = (req, res) => {
+  modify(req.params.id, req.body)
+    .then((updatedItem) => {
+      if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
+      res.status(httpStatus.OK).send(updatedItem);
+    })
+    .catch((e) => {
+      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
+    });
+};
+
+const addComment = (req, res) => {
+  findOne({ _id: req.params.id }).then((mainProduct) => {
+    if (!mainProduct) res.status(httpStatus.NOT_FOUND).send({ message: 'No such record' });
+    const comment = {
+      ...req.body,
+      created_at: new Date(),
+      user_id: req.user,
+    };
+    mainProduct.comments.push(comment);
+    modify(req.params.id, mainProduct)
+      .then((updatedItem) => {
+        if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
+        res.status(httpStatus.OK).send(updatedItem);
+      })
+      .catch((e) => {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
+      });
+  });
+};
+
+const addMedia = (req, res) => {
+  if (!req.params.id || !req.files?.file || !checkSecureFile(req?.files?.file?.mimetype)) return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
+  findOne({ _id: req.params.id }).then((mainProduct) => {
+    if (!mainProduct) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+
+    const extension = path.extname(req.files.file.name);
+    const fileName = `${mainProduct._id?.toString()}${extension}`;
+    const folderPath = path.join(__dirname, '../', 'uploads/products', fileName);
+
+    req.files.file.mv(folderPath, function (err) {
+      if (err) return res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err);
+      mainProduct.media = fileName;
+      modify(req.params.id, mainProduct)
+        .then((updatedItem) => {
+          if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+          res.status(httpStatus.OK).send(updatedItem);
+        })
+        .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
+    });
+  });
+};
+
 module.exports = {
   index,
   create,
+  update,
+  addComment,
+  addMedia,
 };

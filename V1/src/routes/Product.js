@@ -1,9 +1,17 @@
 const express = require('express');
-const { index, create } = require('../controllers/Product');
+
+const validate = require('../middlewares/validate');
+const authenticate = require('../middlewares/authenticate');
+
+const { createProduct, updateProduct, createComment } = require('../validationS/Product');
+const { index, create, update, addComment, addMedia } = require('../controllers/Product');
 
 const router = express.Router();
 
 router.get('/', index);
-router.post('/', create);
 
+router.route('/').post(authenticate, validate(createProduct, 'body'), create);
+router.route('/:id').patch(authenticate, validate(updateProduct, 'body'), update);
+router.route('/:id/add-comment').post(authenticate, validate(createComment, 'body'), addComment);
+router.route('/:id/add-media').post(authenticate, addMedia);
 module.exports = router;

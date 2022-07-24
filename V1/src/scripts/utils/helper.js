@@ -14,8 +14,13 @@ const generateJWTRefreshToken = (user) => {
   return JWT.sign({ name: user.email, ...user }, process.env.REFRESH_TOKEN_SECRET_KEY, { expiresIn: '1w' });
 };
 
+const checkSecureFile = (mimeType) => {
+  return mimeType.includes('image/');
+};
+
 module.exports = {
   passwordToHash,
   generateJWTAccessToken,
   generateJWTRefreshToken,
+  checkSecureFile,
 };

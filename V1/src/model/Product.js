@@ -6,24 +6,24 @@ const ProductSchema = new Mongoose.Schema(
     description: String,
     quantity: Number,
     unit_price: Number,
-    // user_id: {
-    //   type: Mongoose.Types.ObjectId,
-    //   ref: 'User',
-    // },
-    // category_id: {
-    //     type: Mongoose.Types.ObjectId,
-    //     ref: 'Category'
-    // },
+    user_id: {
+      type: Mongoose.Types.ObjectId,
+      ref: 'User',
+    },
+    category_id: {
+        type: Mongoose.Types.ObjectId,
+        ref: 'Category'
+    },
     media: String,
     comments: [
       {
         comment: String,
         rate: Number,
         created_at: Date,
-        // user_id: {
-        //   type: Mongoose.Types.ObjectId,
-        //   ref: 'user',
-        // },
+        user_id: {
+          type: Mongoose.Types.ObjectId,
+          ref: 'User',
+        },
       },
     ],
   },
