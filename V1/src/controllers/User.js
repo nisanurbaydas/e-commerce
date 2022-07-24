@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const { passwordToHash, generateJWTAccessToken, generateJWTRefreshToken } = require('../scripts/utils/helper');
-const { list, insert, findOne } = require('../services/User');
+const { list, insert, findOne, modify } = require('../services/User');
 
 const index = (req, res) => {
   list()
@@ -41,8 +41,18 @@ const login = (req, res) => {
     .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
 };
 
+const update = (req, res) => {
+  modify({ _id: req.user?._id }, req.body)
+    .then((updatedUser) => {
+      if (!updatedUser) return res.status(httpStatus.NOT_FOUND).send({ message: 'User not found' });
+      res.status(httpStatus.OK).send(updatedUser);
+    })
+    .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
+};
+
 module.exports = {
   index,
   create,
   login,
+  update,
 };
