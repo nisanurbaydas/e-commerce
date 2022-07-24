@@ -11,7 +11,9 @@ const index = (req, res) => {
     .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
 };
 
-const create = (req, res) => {
+const create = async (req, res) => {
+  const checkEmail = await findOne({ email: req.body.email });
+  if (checkEmail) return res.status(httpStatus.CONFLICT).send({ message: 'Email is already taken' });
   req.body.password = passwordToHash(req.body.password);
   insert(req.body)
     .then((response) => {
