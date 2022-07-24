@@ -5,7 +5,7 @@ const config = require('./config/index');
 const loaders = require('./loaders');
 const events = require('./scripts/events');
 
-const { ProductRoutes, UserRoutes } = require('./routes');
+const { ProductRoutes, UserRoutes, CategoryRoutes } = require('./routes');
 
 config();
 loaders();
@@ -21,4 +21,5 @@ app.listen(PORT, () => {
 
   app.use('/products', ProductRoutes);
   app.use('/users', UserRoutes);
+  app.use('/categories', CategoryRoutes);
 });

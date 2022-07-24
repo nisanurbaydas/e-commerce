@@ -1,7 +1,7 @@
 const Product = require('../model/Product');
 
-const list = () => {
-  return Product.find({});
+const list = (where) => {
+  return Product.find(where || {});
 };
 
 const insert = (data) => {
