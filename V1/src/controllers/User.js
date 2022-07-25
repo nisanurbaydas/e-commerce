@@ -2,12 +2,14 @@ const httpStatus = require('http-status');
 const uuid = require('uuid');
 
 const { passwordToHash, generateJWTAccessToken, generateJWTRefreshToken } = require('../scripts/utils/helper');
-const productService = require('../services/Product');
-const { list, insert, findOne, modify } = require('../services/User');
 const eventEmitter = require('../scripts/events/eventEmitter');
 
+const ProductService = require('../services/ProductService');
+const UserService = require('../services/UserService');
+//const { list, insert, findOne, modify } = require('../services/User');
+
 const index = (req, res) => {
-  list()
+  UserService.list()
     .then((response) => {
       if (!response) res.status(httpStatus.INTERNAL_SERVER_ERROR).send({ error: 'Something went wrong' });
       res.status(httpStatus.OK).send(response);
@@ -16,10 +18,10 @@ const index = (req, res) => {
 };
 
 const create = async (req, res) => {
-  const checkEmail = await findOne({ email: req.body.email });
+  const checkEmail = await UserService.findOne({ email: req.body.email });
   if (checkEmail) return res.status(httpStatus.CONFLICT).send({ message: 'Email is already taken' });
   req.body.password = passwordToHash(req.body.password);
-  insert(req.body)
+  UserService.create(req.body)
     .then((response) => {
       if (!response) res.status(httpStatus.INTERNAL_SERVER_ERROR).send({ error: 'Something went wrong' });
       res.status(httpStatus.CREATED).send(response);
@@ -29,7 +31,7 @@ const create = async (req, res) => {
 
 const login = (req, res) => {
   req.body.password = passwordToHash(req.body.password);
-  findOne(req.body)
+  UserService.findOne(req.body)
     .then((user) => {
       if (!user) return res.status(httpStatus.NOT_FOUND).send({ message: 'User not found' });
       user = {
@@ -46,7 +48,7 @@ const login = (req, res) => {
 };
 
 const update = (req, res) => {
-  modify({ _id: req.user?._id }, req.body)
+  UserService.update({ _id: req.user?._id }, req.body)
     .then((updatedUser) => {
       if (!updatedUser) return res.status(httpStatus.NOT_FOUND).send({ message: 'User not found' });
       res.status(httpStatus.OK).send(updatedUser);
@@ -56,7 +58,7 @@ const update = (req, res) => {
 
 const resetPassword = (req, res) => {
   const new_password = uuid.v4()?.split('-')[0] || `usr-${new Date().getTime()}`;
-  modify({ email: req.body.email }, { password: passwordToHash(new_password) })
+  UserService.update({ email: req.body.email }, { password: passwordToHash(new_password) })
     .then((updatedUser) => {
       if (!updatedUser) return res.status(httpStatus.NOT_FOUND).send({ message: 'User not found' });
       eventEmitter.emit('send_email', {
@@ -71,7 +73,7 @@ const resetPassword = (req, res) => {
 };
 
 const productList = (req, res) => {
-  productService
+  ProductService
     .list({ user_id: req.user?._id })
     .then((products) => {
       if (!products) res.status(httpStatus.NOT_FOUND).send({ message: 'No record' });

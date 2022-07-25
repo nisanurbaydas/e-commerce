@@ -1,11 +1,11 @@
 const path = require('path');
 const httpStatus = require('http-status');
 
-const { list, insert, modify, findOne, remove } = require('../services/Product');
+const ProductService = require('../services/ProductService');
 const { checkSecureFile } = require('../scripts/utils/helper');
 
 const index = (req, res) => {
-  list()
+  ProductService.list()
     .then((itemList) => {
       if (!itemList) res.status(httpStatus.INTERNAL_SERVER_ERROR).send('No such record');
       res.status(httpStatus.OK).send(itemList);
@@ -17,7 +17,7 @@ const index = (req, res) => {
 
 const create = (req, res) => {
   req.body.user_id = req.user;
-  insert(req.body)
+  ProductService.create(req.body)
     .then((response) => {
       res.status(httpStatus.CREATED).send(response);
     })
@@ -27,7 +27,7 @@ const create = (req, res) => {
 };
 
 const update = (req, res) => {
-  modify(req.params.id, req.body)
+  ProductService.update(req.params.id, req.body)
     .then((updatedItem) => {
       if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
       res.status(httpStatus.OK).send(updatedItem);
@@ -38,7 +38,7 @@ const update = (req, res) => {
 };
 
 const addComment = (req, res) => {
-  findOne({ _id: req.params.id }).then((mainProduct) => {
+  ProductService.findOne({ _id: req.params.id }).then((mainProduct) => {
     if (!mainProduct) res.status(httpStatus.NOT_FOUND).send({ message: 'No such record' });
     const comment = {
       ...req.body,
@@ -46,7 +46,7 @@ const addComment = (req, res) => {
       user_id: req.user,
     };
     mainProduct.comments.push(comment);
-    modify(req.params.id, mainProduct)
+    ProductService.update(req.params.id, mainProduct)
       .then((updatedItem) => {
         if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
         res.status(httpStatus.OK).send(updatedItem);
@@ -59,7 +59,7 @@ const addComment = (req, res) => {
 
 const addMedia = (req, res) => {
   if (!req.params.id || !req.files?.file || !checkSecureFile(req?.files?.file?.mimetype)) return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
-  findOne({ _id: req.params.id }).then((mainProduct) => {
+  ProductService.findOne({ _id: req.params.id }).then((mainProduct) => {
     if (!mainProduct) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
 
     const extension = path.extname(req.files.file.name);
@@ -69,7 +69,7 @@ const addMedia = (req, res) => {
     req.files.file.mv(folderPath, function (err) {
       if (err) return res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err);
       mainProduct.media = fileName;
-      modify(req.params.id, mainProduct)
+      ProductService.update(req.params.id, mainProduct)
         .then((updatedItem) => {
           if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
           res.status(httpStatus.OK).send(updatedItem);
@@ -83,7 +83,7 @@ const deleteProduct = (req, res) => {
   if (!req.params?.id) {
     return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
   }
-  remove(req.params?.id)
+  ProductService.delete(req.params?.id)
     .then((deletedItem) => {
       if (!deletedItem) if (!response) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
       res.status(httpStatus.OK).send(deletedItem);
