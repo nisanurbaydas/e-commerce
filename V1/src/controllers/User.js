@@ -17,7 +17,7 @@ const index = (req, res, next) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const create = async (req, res) => {
+const create = async (req, res, next) => {
   const checkEmail = await UserService.findOne({ email: req.body.email });
   if (checkEmail) return next(new ApiError('Email is already taken', httpStatus.CONFLICT));
 
@@ -30,7 +30,7 @@ const create = async (req, res) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   req.body.password = passwordToHash(req.body.password);
   UserService.findOne(req.body)
     .then((user) => {
@@ -48,7 +48,7 @@ const login = (req, res) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const update = (req, res) => {
+const update = (req, res, next) => {
   UserService.update({ _id: req.user?._id }, req.body)
     .then((updatedUser) => {
       if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
@@ -57,7 +57,7 @@ const update = (req, res) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const resetPassword = (req, res) => {
+const resetPassword = (req, res, next) => {
   const new_password = uuid.v4()?.split('-')[0] || `usr-${new Date().getTime()}`;
   UserService.update({ email: req.body.email }, { password: passwordToHash(new_password) })
     .then((updatedUser) => {
@@ -73,7 +73,7 @@ const resetPassword = (req, res) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const productList = (req, res) => {
+const productList = (req, res, next) => {
   ProductService.list({ user_id: req.user?._id })
     .then((products) => {
       if (!products) return next(new ApiError('No record', httpStatus.NOT_FOUND));
