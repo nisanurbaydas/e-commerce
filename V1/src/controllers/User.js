@@ -18,8 +18,8 @@ const index = (req, res, next) => {
 };
 
 const create = async (req, res, next) => {
-  const checkEmail = await UserService.findOne({ email: req.body.email });
-  if (checkEmail) return next(new ApiError('Email is already taken', httpStatus.CONFLICT));
+  //const checkEmail = await UserService.findOne({ email: req.body.email });
+  //if (checkEmail) return next(new ApiError('Email is already taken', httpStatus.CONFLICT));
 
   req.body.password = passwordToHash(req.body.password);
   UserService.create(req.body)
