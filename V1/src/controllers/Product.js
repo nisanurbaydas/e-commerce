@@ -1,7 +1,7 @@
 const path = require('path');
 const httpStatus = require('http-status');
 
-const { list, insert, modify, findOne } = require('../services/Product');
+const { list, insert, modify, findOne, remove } = require('../services/Product');
 const { checkSecureFile } = require('../scripts/utils/helper');
 
 const index = (req, res) => {
@@ -79,10 +79,23 @@ const addMedia = (req, res) => {
   });
 };
 
+const deleteProduct = (req, res) => {
+  if (!req.params?.id) {
+    return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
+  }
+  remove(req.params?.id)
+    .then((deletedItem) => {
+      if (!deletedItem) if (!response) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+      res.status(httpStatus.OK).send(deletedItem);
+    })
+    .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
+};
+
 module.exports = {
   index,
   create,
   update,
   addComment,
   addMedia,
+  deleteProduct,
 };

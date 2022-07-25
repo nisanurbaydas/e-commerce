@@ -28,9 +28,14 @@ const modify = (id, data) => {
   return Product.findByIdAndUpdate(id, data, { new: true });
 };
 
+const remove = (id) => {
+  return Product.findByIdAndDelete(id);
+};
+
 module.exports = {
   list,
   insert,
   findOne,
   modify,
+  remove,
 };
