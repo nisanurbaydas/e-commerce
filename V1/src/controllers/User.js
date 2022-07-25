@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const uuid = require('uuid');
 
 const { passwordToHash, generateJWTAccessToken, generateJWTRefreshToken } = require('../scripts/utils/helper');
+const productService = require('../services/Product');
 const { list, insert, findOne, modify } = require('../services/User');
 const eventEmitter = require('../scripts/events/eventEmitter');
 
@@ -69,10 +70,21 @@ const resetPassword = (req, res) => {
     .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
 };
 
+const productList = (req, res) => {
+  productService
+    .list({ user_id: req.user?._id })
+    .then((products) => {
+      if (!products) res.status(httpStatus.NOT_FOUND).send({ message: 'No record' });
+      res.status(httpStatus.OK).send(products);
+    })
+    .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e.message));
+};
+
 module.exports = {
   index,
   create,
   login,
   update,
   resetPassword,
+  productList,
 };
