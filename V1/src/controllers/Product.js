@@ -2,44 +2,39 @@ const path = require('path');
 const httpStatus = require('http-status');
 
 const ProductService = require('../services/ProductService');
+const ApiError = require('../errors/ApiError');
 const { checkSecureFile } = require('../scripts/utils/helper');
 
-const index = (req, res) => {
+const index = (req, res, next) => {
   ProductService.list()
     .then((itemList) => {
-      if (!itemList) res.status(httpStatus.INTERNAL_SERVER_ERROR).send('No such record');
+      if (!itemList) return next(new ApiError('No record', httpStatus.NOT_FOUND));
       res.status(httpStatus.OK).send(itemList);
     })
-    .catch((e) => {
-      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e.message);
-    });
+    .catch((e) => next(new ApiError(e?.message)));
 };
 
-const create = (req, res) => {
+const create = (req, res, next) => {
   req.body.user_id = req.user;
   ProductService.create(req.body)
     .then((response) => {
       res.status(httpStatus.CREATED).send(response);
     })
-    .catch((e) => {
-      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
-    });
+    .catch((e) => next(new ApiError(e?.message)));
 };
 
-const update = (req, res) => {
+const update = (req, res, next) => {
   ProductService.update(req.params.id, req.body)
     .then((updatedItem) => {
-      if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
+      if (!updatedItem) return next(new ApiError('No record', httpStatus.NOT_FOUND));
       res.status(httpStatus.OK).send(updatedItem);
     })
-    .catch((e) => {
-      res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
-    });
+    .catch((e) => next(new ApiError(e?.message)));
 };
 
-const addComment = (req, res) => {
+const addComment = (req, res, next) => {
   ProductService.findOne({ _id: req.params.id }).then((mainProduct) => {
-    if (!mainProduct) res.status(httpStatus.NOT_FOUND).send({ message: 'No such record' });
+    if (!mainProduct) return next(new ApiError('No record', httpStatus.NOT_FOUND));
     const comment = {
       ...req.body,
       created_at: new Date(),
@@ -48,19 +43,17 @@ const addComment = (req, res) => {
     mainProduct.comments.push(comment);
     ProductService.update(req.params.id, mainProduct)
       .then((updatedItem) => {
-        if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'No such a record' });
+        if (!updatedItem) return next(new ApiError('No record', httpStatus.NOT_FOUND));
         res.status(httpStatus.OK).send(updatedItem);
       })
-      .catch((e) => {
-        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e);
-      });
+      .catch((e) => next(new ApiError(e?.message)));
   });
 };
 
-const addMedia = (req, res) => {
+const addMedia = (req, res, next) => {
   if (!req.params.id || !req.files?.file || !checkSecureFile(req?.files?.file?.mimetype)) return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
   ProductService.findOne({ _id: req.params.id }).then((mainProduct) => {
-    if (!mainProduct) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+    if (!mainProduct) return next(new ApiError('No record', httpStatus.NOT_FOUND));
 
     const extension = path.extname(req.files.file.name);
     const fileName = `${mainProduct._id?.toString()}${extension}`;
@@ -71,24 +64,21 @@ const addMedia = (req, res) => {
       mainProduct.media = fileName;
       ProductService.update(req.params.id, mainProduct)
         .then((updatedItem) => {
-          if (!updatedItem) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+          if (!updatedItem) return next(new ApiError('No record', httpStatus.NOT_FOUND));
           res.status(httpStatus.OK).send(updatedItem);
         })
-        .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
+        .catch((e) => next(new ApiError(e?.message)));
     });
   });
 };
 
-const deleteProduct = (req, res) => {
-  if (!req.params?.id) {
-    return res.status(httpStatus.BAD_REQUEST).send({ message: 'Missing information' });
-  }
+const deleteProduct = (req, res, next) => {
   ProductService.delete(req.params?.id)
     .then((deletedItem) => {
-      if (!deletedItem) if (!response) return res.status(httpStatus.NOT_FOUND).send({ message: 'Product not found' });
+      if (!deletedItem) return next(new ApiError('No record', httpStatus.NOT_FOUND));
       res.status(httpStatus.OK).send(deletedItem);
     })
-    .catch((e) => res.status(httpStatus.INTERNAL_SERVER_ERROR).send(e));
+    .catch((e) => next(new ApiError(e?.message)));
 };
 
 module.exports = {

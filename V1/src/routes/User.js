@@ -1,9 +1,10 @@
 const express = require('express');
 
-const { index, create, login, update, resetPassword, productList } = require('../controllers/User');
 const validate = require('../middlewares/validate');
 const authenticate = require('../middlewares/authenticate');
+
 const { createUser, userLogin, updateUser, resetPasswordValidation } = require('../validations/User');
+const { index, create, login, update, resetPassword, productList } = require('../controllers/User');
 
 const router = express.Router();
 
