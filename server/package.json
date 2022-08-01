@@ -21,7 +21,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon V1/src/app.js"
+    "start": "nodemon V1/src/app.js",
+    "seeder": "nodemon V1/src/scripts/utils/seeder.js"
   },
   "repository": {
     "type": "git",

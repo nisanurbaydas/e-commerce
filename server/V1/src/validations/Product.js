@@ -1,11 +1,12 @@
 const Joi = require('joi');
 
 const createProduct = Joi.object({
-  name: Joi.string().required().min(4),
+  name: Joi.string().required().min(4).max(100),
   description: Joi.string().required().min(7),
   category_id: Joi.string().required().min(8),
-  unit_price: Joi.number().positive().required(),
-  quantity: Joi.number().positive(),
+  price: Joi.number().positive().required().max(5),
+  stock: Joi.number().positive().required().max(5),
+  seller: Joi.string().required()
 });
 
 const updateProduct = Joi.object({
