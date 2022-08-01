@@ -26,7 +26,7 @@ const PORT = process.env.APP_PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 
-  app.use('/products', ProductRoutes);
+  app.use('/api/v1', ProductRoutes);
   app.use('/users', UserRoutes);
   app.use('/categories', CategoryRoutes);
 

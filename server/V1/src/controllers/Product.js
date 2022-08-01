@@ -14,6 +14,15 @@ const index = (req, res, next) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
+const getOne = (req, res, next) => {
+  ProductService.findOne({_id: req.params.id})
+  .then((item)=>{
+    if(!item) return next(new ApiError('No record', httpStatus.NOT_FOUND))
+    res.status(httpStatus.OK).send(item);
+  })
+  .catch((e) => next(new ApiError(e?.message)))
+};
+
 const create = (req, res, next) => {
   req.body.user_id = req.user;
   ProductService.create(req.body)
@@ -83,6 +92,7 @@ const deleteProduct = (req, res, next) => {
 
 module.exports = {
   index,
+  getOne,
   create,
   update,
   addComment,
