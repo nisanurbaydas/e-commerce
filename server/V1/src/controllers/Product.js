@@ -1,26 +1,45 @@
 const path = require('path');
 const httpStatus = require('http-status');
+const Product = require('../model/Product');
 
 const ProductService = require('../services/ProductService');
 const ApiError = require('../errors/ApiError');
 const { checkSecureFile } = require('../scripts/utils/helper');
+const APIFeatures = require('../scripts/utils/apiFeatures');
 
-const index = (req, res, next) => {
-  ProductService.list()
-    .then((itemList) => {
-      if (!itemList) return next(new ApiError('No record', httpStatus.NOT_FOUND));
-      res.status(httpStatus.OK).send(itemList);
-    })
-    .catch((e) => next(new ApiError(e?.message)));
+const index = async (req, res, next) => {
+  // await ProductService.list()
+  //   .then((itemList) => {
+  //     if (!itemList) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+
+  //     const apiFeatures = new APIFeatures(itemList, req.query).search();
+  //     const items = apiFeatures.query;
+
+  //     res.status(httpStatus.OK).json({
+  //       success: true,
+  //       count: items.length,
+  //       items,
+  //     });
+  //   })
+  //   .catch((e) => next(new ApiError(e?.message)));
+
+  const apiFeatures = new APIFeatures(ProductService.list(), req.query).search();
+  const items = await apiFeatures.query;
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    count: items.length,
+    items,
+  });
 };
 
 const getOne = (req, res, next) => {
-  ProductService.findOne({_id: req.params.id})
-  .then((item)=>{
-    if(!item) return next(new ApiError('No record', httpStatus.NOT_FOUND))
-    res.status(httpStatus.OK).send(item);
-  })
-  .catch((e) => next(new ApiError(e?.message)))
+  ProductService.findOne({ _id: req.params.id })
+    .then((item) => {
+      if (!item) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).send(item);
+    })
+    .catch((e) => next(new ApiError(e?.message)));
 };
 
 const create = (req, res, next) => {
