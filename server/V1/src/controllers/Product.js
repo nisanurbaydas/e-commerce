@@ -23,13 +23,17 @@ const index = async (req, res, next) => {
   //   })
   //   .catch((e) => next(new ApiError(e?.message)));
 
-  const apiFeatures = new APIFeatures(ProductService.list(), req.query).search();
+  const resPerPage = 4;
+  const productsCount = await Product.countDocuments();
+
+  const apiFeatures = new APIFeatures(ProductService.list(), req.query).search().filter().pagination(resPerPage);
   const items = await apiFeatures.query;
 
   res.status(httpStatus.OK).json({
     success: true,
     count: items.length,
     items,
+    totalProductsCount: productsCount,
   });
 };
 
