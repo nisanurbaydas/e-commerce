@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const fileUpload = require('express-fileupload');
+const cookieParser = require('cookie-parser');
 
 const config = require('./config/index');
 const loaders = require('./loaders');
@@ -21,13 +22,14 @@ app.use('/product-images', express.static(path.join(__dirname, './', 'uploads/pr
 app.use(express.json());
 app.use(helmet());
 app.use(fileUpload());
+app.use(cookieParser());
 
 const PORT = process.env.APP_PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 
   app.use('/api/v1', ProductRoutes);
-  app.use('/users', UserRoutes);
+  app.use('/api/v1', UserRoutes);
   app.use('/categories', CategoryRoutes);
 
   app.use((req, res, next) => {

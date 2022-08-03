@@ -2,30 +2,22 @@ const Mongoose = require('mongoose');
 
 const UserSchema = new Mongoose.Schema(
   {
-    first_name: String,
-    last_name: String,
+    name: String,
     email: {
       type: String,
       unique: true,
     },
     password: String,
-    addresses: [
-      {
-        title: String,
-        address1: String,
-        addresses2: String,
-        country: String,
-        province: String,
-        code: String,
-      },
-    ],
-    phones: [
-      {
-        number: String,
+    avatar: {
+      public_id: {
         type: String,
+        //required: true,
       },
-    ],
-    //favorites:[], //Product ref
+      url: {
+        type: String,
+        //required: true,
+      },
+    },
     isAdmin: Boolean,
   },
   { timestamps: true, versionKey: false }

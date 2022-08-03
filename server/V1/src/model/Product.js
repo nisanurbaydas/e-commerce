@@ -19,10 +19,7 @@ const ProductSchema = new Mongoose.Schema(
     user_id: {
       type: Mongoose.Types.ObjectId,
       ref: 'User',
-    },
-    category_id: {
-      type: Mongoose.Types.ObjectId,
-      ref: 'Category',
+      required: true
     },
     images: [
       {

@@ -18,9 +18,14 @@ const checkSecureFile = (mimeType) => {
   return mimeType.includes('image/');
 };
 
+const getResetPasswordToken = (user) => {
+  return JWT.sign({ _id: user._id }, process.env.RESET_PASSWORD_KEY, { expiresIn: Date.now() + 30 * 60 * 1000 });
+};
+
 module.exports = {
   passwordToHash,
   generateJWTAccessToken,
   generateJWTRefreshToken,
   checkSecureFile,
+  getResetPasswordToken,
 };

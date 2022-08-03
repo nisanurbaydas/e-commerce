@@ -1,13 +1,146 @@
 const httpStatus = require('http-status');
-const uuid = require('uuid');
+const JWT = require('jsonwebtoken');
 
-const { passwordToHash, generateJWTAccessToken, generateJWTRefreshToken } = require('../scripts/utils/helper');
+const { passwordToHash, getResetPasswordToken } = require('../scripts/utils/helper');
 const eventEmitter = require('../scripts/events/eventEmitter');
 
-const ProductService = require('../services/ProductService');
 const UserService = require('../services/UserService');
 const ApiError = require('../errors/ApiError');
+const sendToken = require('../scripts/utils/jwtToken');
 
+//register
+const create = (req, res, next) => {
+  req.body.password = passwordToHash(req.body.password);
+  UserService.create(req.body)
+    .then((response) => {
+      if (!response) return next(new ApiError('Something went wrong', httpStatus.INTERNAL_SERVER_ERROR));
+      sendToken(response, httpStatus.OK, res);
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+const login = (req, res, next) => {
+  req.body.password = passwordToHash(req.body.password);
+  UserService.findOne(req.body)
+    .then((user) => {
+      if (!user) return next(new ApiError('Email or password incorrect', httpStatus.NOT_FOUND));
+      // user = {
+      //   ...user.toObject(),
+      //   tokens: {
+      //     access_token: generateJWTAccessToken(user),
+      //     refresh_token: generateJWTRefreshToken(user),
+      //   },
+      // };
+      // delete user.password;
+      // res.status(httpStatus.OK).send(user);
+      sendToken(user, httpStatus.OK, res);
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+const logout = (req, res, next) => {
+  res.cookie('token', null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: 'Logged out',
+  });
+};
+
+const forgotPassword = (req, res, next) => {
+  UserService.findOne({ email: req.body.email })
+    .then((user) => {
+      if (!user) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+
+      //Get reset token
+      const resetToken = getResetPasswordToken(user);
+
+      //Create reset password url
+      const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/password/reset/${resetToken}`;
+
+      eventEmitter.emit('send_email', {
+        //info - send mail with defined transport object
+        to: user.email,
+        subject: 'Blossom Password Recovery',
+        html: `Your password reset token is as follow:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it.`,
+      });
+
+      res.status(httpStatus.OK).json({
+        success: true,
+        message: `Email sent to: ${user.email}`,
+      });
+    })
+    .catch((e) => {
+      return next(new ApiError(e?.message));
+    });
+};
+
+const resetPassword = (req, res, next) => {
+  const token = req.params.token;
+  JWT.verify(token, process.env.RESET_PASSWORD_KEY, (err, user) => {
+    if (err) return next(new ApiError('Incorrect token or it is expired', httpStatus.BAD_REQUEST));
+    req.user = user;
+  });
+
+  if (req.body.password !== req.body.confirmPassword) return next(new ApiError('Passwords do not match', httpStatus.BAD_REQUEST));
+  req.body.password = passwordToHash(req.body.password);
+
+  UserService.update({ _id: req.user._id }, req.body)
+    .then((updatedUser) => {
+      if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Your password changed successfully',
+      });
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+// Get currently logged in user details
+const getUserProfile = (req, res, next) => {
+  UserService.findOne({ _id: req.user })
+    .then((user) => {
+      if (!user) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).json({
+        success: true,
+        user,
+      });
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+// Update/change password currenttly logged in user
+const updatePassword = (req, res, next) => {
+  req.body.oldPassword = passwordToHash(req.body.oldPassword);
+  UserService.findOne({ password: req.body.oldPassword })
+    .then((user) => {
+      if (!user) return next(new ApiError('Old password is not correct'));
+      req.body.password = passwordToHash(req.body.password);
+      UserService.update({ _id: req.user._id }, req.body)
+        .then((updatedUser) => {
+          if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+          sendToken(updatedUser, httpStatus.OK, res);
+        })
+        .catch((e) => next(new ApiError(e?.message)));
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+const updateProfile = (req, res, next) => {
+  UserService.update({ _id: req.user?._id }, req.body)
+    .then((updatedUser) => {
+      if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).send(updatedUser);
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+/********   ADMIN   ********/
+
+//get all users
 const index = (req, res, next) => {
   UserService.list()
     .then((response) => {
@@ -17,39 +150,20 @@ const index = (req, res, next) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const create = async (req, res, next) => {
-  //const checkEmail = await UserService.findOne({ email: req.body.email });
-  //if (checkEmail) return next(new ApiError('Email is already taken', httpStatus.CONFLICT));
-
-  req.body.password = passwordToHash(req.body.password);
-  UserService.create(req.body)
-    .then((response) => {
-      if (!response) return next(new ApiError('Something went wrong', httpStatus.INTERNAL_SERVER_ERROR));
-      res.status(httpStatus.CREATED).send(response);
-    })
-    .catch((e) => next(new ApiError(e?.message)));
-};
-
-const login = (req, res, next) => {
-  req.body.password = passwordToHash(req.body.password);
-  UserService.findOne(req.body)
+const getUserDetails = (req, res, next) => {
+  UserService.findOne({ _id: req.params.id })
     .then((user) => {
       if (!user) return next(new ApiError('No record', httpStatus.NOT_FOUND));
-      user = {
-        ...user.toObject(),
-        tokens: {
-          access_token: generateJWTAccessToken(user),
-          refresh_token: generateJWTRefreshToken(user),
-        },
-      };
-      delete user.password;
-      res.status(httpStatus.OK).send(user);
+      res.status(httpStatus.OK).json({
+        success: true,
+        user,
+      });
     })
     .catch((e) => next(new ApiError(e?.message)));
 };
 
 const update = (req, res, next) => {
-  UserService.update({ _id: req.user?._id }, req.body)
+  UserService.update({ _id: req.params.id }, req.body)
     .then((updatedUser) => {
       if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
       res.status(httpStatus.OK).send(updatedUser);
@@ -57,27 +171,14 @@ const update = (req, res, next) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
-const resetPassword = (req, res, next) => {
-  const new_password = uuid.v4()?.split('-')[0] || `usr-${new Date().getTime()}`;
-  UserService.update({ email: req.body.email }, { password: passwordToHash(new_password) })
-    .then((updatedUser) => {
-      if (!updatedUser) return next(new ApiError('No record', httpStatus.NOT_FOUND));
-      eventEmitter.emit('send_email', {
-        //info - send mail with defined transport object
-        to: updatedUser.email,
-        subject: 'Reset Password',
-        html: `User password has been changed. <br /> Your new pasword -> ${new_password}`,
+const deleteUser = (req, res, next) => {
+  UserService.delete(req.params?.id)
+    .then((deletedItem) => {
+      if (!deletedItem) return next(new ApiError('No record', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).json({
+        success: true,
+        message: "You deleted the user succesfully"
       });
-      res.status(httpStatus.OK).send({ message: 'Required information is sent your e-mail' });
-    })
-    .catch((e) => next(new ApiError(e?.message)));
-};
-
-const productList = (req, res, next) => {
-  ProductService.list({ user_id: req.user?._id })
-    .then((products) => {
-      if (!products) return next(new ApiError('No record', httpStatus.NOT_FOUND));
-      res.status(httpStatus.OK).send(products);
     })
     .catch((e) => next(new ApiError(e?.message)));
 };
@@ -86,7 +187,13 @@ module.exports = {
   index,
   create,
   login,
-  update,
+  logout,
+  updateProfile,
+  forgotPassword,
   resetPassword,
-  productList,
+  getUserProfile,
+  updatePassword,
+  update,
+  getUserDetails,
+  deleteUser,
 };
