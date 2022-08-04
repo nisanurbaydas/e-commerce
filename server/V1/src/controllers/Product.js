@@ -65,7 +65,8 @@ const update = (req, res, next) => {
 };
 
 const addComment = (req, res, next) => {
-  ProductService.findOne({ _id: req.params.id }).then((mainProduct) => {
+  ProductService.findOne({ _id: req.params.id })
+  .then((mainProduct) => {
     if (!mainProduct) return next(new ApiError('No record', httpStatus.NOT_FOUND));
     const comment = {
       ...req.body,
