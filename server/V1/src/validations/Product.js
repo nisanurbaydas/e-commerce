@@ -20,7 +20,13 @@ const updateProduct = Joi.object({
   price: Joi.number().positive(),
 });
 
+const createReviewValidation = Joi.object({
+  rating: Joi.number().required().min(1).max(5),
+  comment: Joi.string().required(),
+  productId: Joi.required(),
+});
 module.exports = {
   createProduct,
   updateProduct,
+  createReviewValidation
 };
