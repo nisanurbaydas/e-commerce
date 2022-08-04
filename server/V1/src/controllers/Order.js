@@ -21,6 +21,33 @@ const create = (req, res, next) => {
     .catch((e) => next(new ApiError(e?.message)));
 };
 
+const getSingleOrder = (req, res, next) => {
+  OrderService.findOne({ _id: req.params.id })
+    .then((order) => {
+      if (!order) return next(new ApiError('No order found with this id', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).json({
+        success: true,
+        order,
+      });
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
+//Get logged in user orders
+const myOrders = (req, res, next) => {
+  OrderService.list({ user: req.user })
+    .then((orders) => {
+      if (!orders) return next(new ApiError('You do not have any order', httpStatus.NOT_FOUND));
+      res.status(httpStatus.OK).json({
+        success: true,
+        orders,
+      });
+    })
+    .catch((e) => next(new ApiError(e?.message)));
+};
+
 module.exports = {
   create,
+  getSingleOrder,
+  myOrders,
 };
