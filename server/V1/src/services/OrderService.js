@@ -1,7 +1,7 @@
 const BaseService = require('./BaseService');
 const BaseModel = require('../model/Order');
 
-class OrderService {
+class OrderService extends BaseService{
   constructor() {
     super(BaseModel);
   }

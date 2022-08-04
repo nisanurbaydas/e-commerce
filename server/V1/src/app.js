@@ -9,7 +9,7 @@ const config = require('./config/index');
 const loaders = require('./loaders');
 const events = require('./scripts/events');
 
-const { ProductRoutes, UserRoutes, CategoryRoutes } = require('./routes');
+const { ProductRoutes, UserRoutes, OrderRoutes } = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
 
 config();
@@ -30,7 +30,7 @@ app.listen(PORT, () => {
 
   app.use('/api/v1', ProductRoutes);
   app.use('/api/v1', UserRoutes);
-  app.use('/categories', CategoryRoutes);
+  app.use('/api/v1', OrderRoutes);
 
   app.use((req, res, next) => {
     const error = new Error('Page you are looking for does not exist');
