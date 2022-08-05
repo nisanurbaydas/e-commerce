@@ -1,5 +1,5 @@
-#MERN stack E-commerce
+# MERN stack E-commerce
 It is built with Node.js, Express, MongoDB
 
-#Seed Database
+# Seed Database
 npm run seeder
