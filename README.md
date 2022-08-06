@@ -1,4 +1,4 @@
-# MERN stack E-commerce
+# E-commerce
 It is built with Node.js, Express, MongoDB
 
 # Seed Database
